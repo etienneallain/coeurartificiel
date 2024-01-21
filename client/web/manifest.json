@@ -1,6 +1,6 @@
 {
-    "name": "flutter_tic_tac_toe",
-    "short_name": "flutter_tic_tac_toe",
+    "name": "coeur_artificiel",
+    "short_name": "coeur_artificiel",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
