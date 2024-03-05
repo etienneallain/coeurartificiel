@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+#from flask import Flask, request, jsonify
 import random
-from flask_cors import CORS
+#from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+#app = Flask(__name__)
+#CORS(app)
 
 listOfPossibleCards = [...]
 
@@ -134,40 +134,40 @@ class HeartsGame:
             self.scores[i] = res
 
 
-@app.route('/initialisation', methods=['POST'])
-def initialisation():
-    global listOfIa
-
-    data = request.json
-
-    if 'ia_players' in data:
-        ia_players = data['ia_players']
-
-        for joueur in ia_players:
-            id_joueur = joueur.get('id')
-            type_joueur = joueur.get('type')
-
-            listOfIa[id_joueur] = type_joueur
-            print(listOfIa)
-        return 'Initialisation réussie'
-
-    else:
-        return 'Données JSON invalides', 400
-
-
-
-@app.route('/play_move', methods=['POST'])
-def play_move():
-    global listOfPossibleCards
-
-    # Récupère la taille envoyée par le client
-    data = request.json
-    taille = data.get('taille')
-    print("la taille est : "+ str(taille))
-    random_index = random.randint(0, taille - 1)
-    print("le nombre choisi est : "+ str(random_index))
-    return jsonify({'nombre_aleatoire': str(random_index)})
-
-
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
+# @app.route('/initialisation', methods=['POST'])
+# def initialisation():
+#     global listOfIa
+#
+#     data = request.json
+#
+#     if 'ia_players' in data:
+#         ia_players = data['ia_players']
+#
+#         for joueur in ia_players:
+#             id_joueur = joueur.get('id')
+#             type_joueur = joueur.get('type')
+#
+#             listOfIa[id_joueur] = type_joueur
+#             print(listOfIa)
+#         return 'Initialisation réussie'
+#
+#     else:
+#         return 'Données JSON invalides', 400
+#
+#
+#
+# @app.route('/play_move', methods=['POST'])
+# def play_move():
+#     global listOfPossibleCards
+#
+#     # Récupère la taille envoyée par le client
+#     data = request.json
+#     taille = data.get('taille')
+#     print("la taille est : "+ str(taille))
+#     random_index = random.randint(0, taille - 1)
+#     print("le nombre choisi est : "+ str(random_index))
+#     return jsonify({'nombre_aleatoire': str(random_index)})
+#
+#
+# if __name__ == '__main__':
+#     app.run(host='127.0.0.1', port=5000)
