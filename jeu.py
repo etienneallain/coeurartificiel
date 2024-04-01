@@ -48,9 +48,10 @@ class Joueur:
 
 
 class JoueurIA(Joueur):
-    def __init__(self, nom, modele_reseau):
+    def __init__(self, nom, modele_reseau, optimizer):
         super().__init__(nom)
         self.modele_reseau = modele_reseau
+        self.optimizer = optimizer
 
     def parameters(self):
         return self.modele_reseau.parameters()
@@ -429,18 +430,23 @@ class BarbuGameState:
 
 class Entrainement:
 
-    def __init__(self, jeu, joueur_IA):
+    def __init__(self, jeu, joueur_ia, joueur_ia_cible):
         self.jeu = jeu
-        self.joueur_IA = joueur_IA
+        self.joueur_ia = joueur_ia
+        self.joueur_ia_cible = joueur_ia_cible
         self.actions_etats = []
         self.predict_q_values = []
         self.real_q_values = []
         self.points = []
         self.reward = 0
-        self.gamma = 0.99
+        self.gamma = 0.90
         self.var = 0
-        self.optimizer = optim.Adam(self.joueur_IA.parameters(), lr=0.1)
+        self.lr = 0.01
+        # self.optimizer = optim.Adam(modele_reseau.parameters(), self.lr)
         self.loss_function = torch.nn.MSELoss()
+        self.loss = 0.0
+        self.predict_q_tensor = []
+        self.real_q_tensor = []
 
     def collecter_actions_etats(self, actions_etats_joueurIA):
         self.actions_etats = actions_etats_joueurIA
@@ -464,12 +470,10 @@ class Entrainement:
 
         if self.points[0] == 0:
             recompense = 0
-        if self.points[0] > 0:
-            recompense = 1
         if self.points[0] == 40:
-            recompense = 2
+            recompense = 40
         if self.points[0] < 0:
-            recompense = -1
+            recompense = self.points[0]
 
         return recompense
 
@@ -488,28 +492,33 @@ class Entrainement:
             self.var = self.var + 1
             print(self.var)
             if self.var <= 7:
-                real_qvalue = (self.reward/8) + self.gamma * self.predict_q_values[self.var]
+                real_qvalue = self.predict_q_values[self.var - 1] + self.lr * (
+                        (self.reward / 8) + self.gamma * self.predict_q_values[self.var] - self.predict_q_values[
+                    self.var - 1])
                 self.real_q_values.append(real_qvalue)
             if self.var == 8:
-                real_qvalue = (self.reward/8) + self.gamma * 0
+                real_qvalue = (self.reward / 8) + self.gamma * 0
                 self.real_q_values.append(real_qvalue)
 
             print(self.real_q_values)
 
         # Conversion des listes en tenseurs PyTorch
-        predict_q_tensor = torch.tensor(self.predict_q_values, dtype=torch.float32, requires_grad=True)
-        real_q_tensor = torch.tensor(self.real_q_values, dtype=torch.float32, requires_grad=True)
+        self.predict_q_tensor = torch.tensor(self.predict_q_values, dtype=torch.float32, requires_grad=True)
+        self.real_q_tensor = torch.tensor(self.real_q_values, dtype=torch.float32, requires_grad=True)
 
-        # Calcul de la perte (loss) avec la fonction MSELoss
-        loss = self.loss_function(predict_q_tensor, real_q_tensor)
+        self.loss = self.loss_function(self.predict_q_tensor, self.real_q_tensor)
+        return self.loss
+
+    def mise_à_jour_réseau(self, joueur_ia_cible=False):
+        if joueur_ia_cible:
+            network = self.joueur_ia_cible
 
         # Rétropropagation (backpropagation)
-        self.optimizer.zero_grad()
-        loss.backward()
+        network.optimizer.zero_grad()
+        self.loss.backward()
 
         # Mise à jour des paramètres du modèle
-        self.optimizer.step()
-        return loss
+        network.optimizer.step()
 
 
 # création des joueurs
@@ -519,8 +528,9 @@ joueur3 = Joueur("joueur 3")
 joueur4 = Joueur("joueur 4")
 
 modele_reseau = ReseauJoueurIA(input_size=430, output_size=8)
-joueur_ia = JoueurIA("JoueurIA", modele_reseau)
-joueur_ia_cible = JoueurIA("JoueurIA_cible", modele_reseau)
+optimizer = optim.Adam(modele_reseau.parameters(), lr=0.01)
+joueur_ia = JoueurIA("JoueurIA", modele_reseau, optimizer)
+joueur_ia_cible = JoueurIA("JoueurIA_cible", modele_reseau, optimizer)
 
 # Création de la liste des joueurs avec le réseau d'évaluation pour commencer
 joueurs = [joueur_ia, joueur2, joueur3, joueur4]
@@ -530,29 +540,24 @@ jeu_des_coeurs = JeuDesCoeurs()
 
 pertes = []
 nb_episodes = 1000
-update_frequency = 5  # Fréquence de changement entre joueur_ia et joueur_ia_cible
+update_frequency = 7  # Fréquence de changement entre joueur_ia et joueur_ia_cible
 
 # Boucle d'entraînement
 for episode in range(nb_episodes):
-
-    # Changez les réseaux utilisés dans la liste des joueurs si nécessaire
-    if episode // update_frequency % 2 == 0:
-        joueurs[0] = joueur_ia
-    else:
-        joueurs[0] = joueur_ia_cible
-
-    # Mettez à jour les poids du réseau cible tous les 5 épisodes
-    if episode % update_frequency == 0 and episode != 0:
-        joueur_ia_cible.modele_reseau.load_state_dict(joueur_ia.modele_reseau.state_dict())
-
     game_state = BarbuGameState(jeu_des_coeurs, joueurs)
 
-    entrainement = Entrainement(jeu_des_coeurs, joueur_ia)
+    entrainement = Entrainement(jeu_des_coeurs, joueur_ia, joueur_ia_cible)
+
+    # Mettez à jour les poids du réseau d'évaluation (joueur_ia) avec les poids du réseau cible (joueur_ia_cible)
+    if (episode + 1) % update_frequency == 0:
+        joueur_ia.modele_reseau.load_state_dict(joueur_ia_cible.modele_reseau.state_dict())
 
     actions_etats = game_state.simuler_partie()
+
     entrainement.collecter_actions_etats(actions_etats)
 
     perte = entrainement.entrainer_modele(game_state.calculer_points())
+    entrainement.mise_à_jour_réseau(joueur_ia_cible)
     pertes.append(perte.item())
 
 print(pertes)
@@ -563,7 +568,8 @@ plt.ylabel('Perte (%)')
 plt.title('Évolution de la perte pendant l\'entraînement')
 plt.show()
 
-
-
-# problème changement de la taille du vecteur d'entrée car les cartes_restantes_joueurs diminue au fur et à mesure
-# des pli à résoudre avec du zero padding
+# Un problème changement de la taille du vecteur d'entrée, car les cartes_restantes_joueurs diminue
+# au fur et à mesure des plis à résoudre avec du zero padding
+# Deux réseaux de neurones le premier d'évaluation est mis à jour chaque X ép et c'est toujours
+# le Rcible qui est mis à jour. Je continue d'utiliser le réseau d'évaluation pour prédire mes Qvaleurs.
+# Utiliser le MonteCarlo pour les mises à jour des Qvaleurs prédites.
