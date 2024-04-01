@@ -437,16 +437,18 @@ class Entrainement:
         self.actions_etats = []
         self.predict_q_values = []
         self.real_q_values = []
+        self.normalized_q_values =[]
         self.points = []
         self.reward = 0
-        self.gamma = 0.90
+        self.gamma = 1
         self.var = 0
-        self.lr = 0.01
+        self.lr = 0.1
         # self.optimizer = optim.Adam(modele_reseau.parameters(), self.lr)
         self.loss_function = torch.nn.MSELoss()
         self.loss = 0.0
         self.predict_q_tensor = []
         self.real_q_tensor = []
+        self.returns = []
 
     def collecter_actions_etats(self, actions_etats_joueurIA):
         self.actions_etats = actions_etats_joueurIA
@@ -477,9 +479,30 @@ class Entrainement:
 
         return recompense
 
-    def entrainer_modele(self, points_joueurs):
-
+    def compute_returns(self, points_joueurs):
         self.reward = self.calculer_recompense(points_joueurs)
+        # La récompense totale obtenue à la fin de l'épisode est déjà connue (self.reward)
+        # et tu souhaites attribuer cette récompense de façon équitable à chaque action.
+
+        # Initialiser les retours pour chaque action à 0
+        self.returns = [0 for _ in range(len(self.actions_etats))]  # Assure la même taille que actions_etats
+
+        # Calculer les retours pour chaque action, en partant de la fin
+        G = 0  # Valeur initiale du retour
+        for t in range(len(self.actions_etats) - 1, -1, -1):
+            # Pour une approche Monte Carlo, on commence par la fin et on remonte.
+            # La récompense est divisée également, donc cette approche spécifique peut être ajustée selon le besoin.
+            # Dans ton cas, chaque action reçoit une partie de la récompense totale.
+            G = self.reward / len(
+                self.actions_etats) + self.gamma * G  # Mise à jour de G pour inclure la récompense et le discount
+            self.returns[t] = G  # Stocker le retour calculé pour cette action
+
+        print("LONGUEUR DE RETURNS")
+        print(len(self.returns))
+        print(self.returns)
+
+    def entrainer_modele(self, points_joueurs):
+        self.compute_returns(points_joueurs)
         print(self.reward)
 
         # Parcours de chaque état/action dans la liste
@@ -491,16 +514,13 @@ class Entrainement:
             print(etat)
             self.var = self.var + 1
             print(self.var)
-            if self.var <= 7:
-                real_qvalue = self.predict_q_values[self.var - 1] + self.lr * (
-                        (self.reward / 8) + self.gamma * self.predict_q_values[self.var] - self.predict_q_values[
-                    self.var - 1])
+            if self.var <= 8:
+                real_qvalue = self.predict_q_values[self.var - 1] + self.gamma * (
+                            self.returns[self.var - 1] - self.predict_q_values[self.var - 1])
                 self.real_q_values.append(real_qvalue)
-            if self.var == 8:
-                real_qvalue = (self.reward / 8) + self.gamma * 0
-                self.real_q_values.append(real_qvalue)
-
-            print(self.real_q_values)
+            # if self.var == 8:
+            #     real_qvalue = (self.reward / 8) + self.gamma * 0
+            #     self.real_q_values.append(real_qvalue)
 
         # Conversion des listes en tenseurs PyTorch
         self.predict_q_tensor = torch.tensor(self.predict_q_values, dtype=torch.float32, requires_grad=True)
@@ -528,7 +548,7 @@ joueur3 = Joueur("joueur 3")
 joueur4 = Joueur("joueur 4")
 
 modele_reseau = ReseauJoueurIA(input_size=430, output_size=8)
-optimizer = optim.Adam(modele_reseau.parameters(), lr=0.01)
+optimizer = optim.Adam(modele_reseau.parameters(), lr=0.1)
 joueur_ia = JoueurIA("JoueurIA", modele_reseau, optimizer)
 joueur_ia_cible = JoueurIA("JoueurIA_cible", modele_reseau, optimizer)
 
@@ -539,8 +559,8 @@ joueurs = [joueur_ia, joueur2, joueur3, joueur4]
 jeu_des_coeurs = JeuDesCoeurs()
 
 pertes = []
-nb_episodes = 1000
-update_frequency = 7  # Fréquence de changement entre joueur_ia et joueur_ia_cible
+nb_episodes = 100
+update_frequency = 5  # Fréquence de changement entre joueur_ia et joueur_ia_cible
 
 # Boucle d'entraînement
 for episode in range(nb_episodes):
