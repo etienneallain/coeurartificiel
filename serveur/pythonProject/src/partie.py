@@ -1,5 +1,5 @@
-from joueur import Joueur
-from manche import Manche
+from src.Player import RandomPlayer
+from src.manche import Manche
 import torch
 
 SCORE_PERDANT = -199
@@ -12,7 +12,7 @@ class partie:
     def match_fini(self):
         for joueur in self.joueurs:
             if joueur.getScore() < SCORE_PERDANT:
-                print(str(joueur.getScore())+""+joueur.getName())
+                print(str(joueur.getScore()) +"" + joueur.get_name())
                 return True
 
     def jouer_partie(self):
@@ -21,7 +21,7 @@ class partie:
         while True:
             print(f"manche n{compt}")
             compt += 1
-            Manche(self.joueurs).jouer_manche()
+            Manche(self.joueurs).play_to_update_random_dataset()
             match_fini = self.match_fini()
             if match_fini:
                 break
@@ -43,9 +43,9 @@ class partie:
             print(f"Rank {i}: {player.name} - Score: {player.getScore()}")
 
     def jouer_une_manche(self):
-        Manche(self.joueurs).jouer_manche()
+        Manche(self.joueurs).play_to_update_random_dataset()
 
 if __name__ == '__main__':
-    partie = partie([Joueur("pedro"), Joueur("pedrito"), Joueur("pedri"), Joueur("pedru")])
+    partie = partie([RandomPlayer("pedro"), RandomPlayer("pedrito"), RandomPlayer("pedri"), RandomPlayer("pedru")])
     partie.jouer_partie()
     partie.print_rank()

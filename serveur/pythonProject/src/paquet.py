@@ -2,8 +2,6 @@ import random
 
 from enum import Enum
 
-from carte import Carte
-
 
 class Couleur(Enum):
     COEURS = '♥'
@@ -37,6 +35,27 @@ class Paquet:
     def prendre_carte(self):
         return self.cartes.pop()
 
+    def remove_card(self, carte):
+        if carte in self.cartes:
+            self.cartes.remove(carte)
+            return carte
+        else:
+            print("Card not found in the paquet.")
+            return None
+
+    # def __str__(self):
+    #     return "\n".join([f"{carte.couleur.name} - {carte.rang.name}" for carte in self.cartes])
+    def __str__(self):
+        return str(len(self.cartes))
+
+    def remove_cards(self, cards):
+        remaining_cards = [card for card in self.cartes if card not in cards]
+
+        if len(cards) != len(self.cartes) - len(remaining_cards):
+            print("Some cards not found in the paquet.")
+
+        return remaining_cards
+
 
 class Carte:
     def __init__(self, couleur, rang):
@@ -53,5 +72,9 @@ class Carte:
         return self.rang
 
     def get_order(self):
-        from paquet import RANG_ORDER
         return RANG_ORDER.get(self.rang, 1000)
+
+    def __eq__(self, other):
+        if isinstance(other, Carte):
+            return self.couleur == other.couleur and self.rang == other.rang
+        return False
