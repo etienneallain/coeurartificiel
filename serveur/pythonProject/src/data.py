@@ -35,6 +35,8 @@ class Data:
                 [RandomPlayer("pedro"), RandomPlayer("pedrito"), RandomPlayer("pedri"), RandomPlayer("pedru")]
             )
             manche.play_to_update_random_dataset(self)
+            if i % 1000 == 0:
+                print(i)
         return self
 
     def generate_NN_data(self, num_tricks, model):
@@ -45,4 +47,7 @@ class Data:
                  NNPlayer("pedru", model)]
             )
             manche.play_to_update_nn_dataset(self)
+            if i % 1000 == 0:
+                print(i)
+
         return self

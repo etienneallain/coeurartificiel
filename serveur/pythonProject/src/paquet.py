@@ -24,7 +24,42 @@ class Rang(Enum):
 RANG_ORDER = {Rang.SEPT: 0, Rang.HUIT: 1, Rang.NEUF: 2, Rang.DIX: 3,
               Rang.VALET: 4, Rang.DAME: 5, Rang.ROI: 6, Rang.AS: 7}
 
+COULEUR_MAPPING = {
+    'hearts': Couleur.COEURS,
+    'diamonds': Couleur.CARREAUX,
+    'clubs': Couleur.TREFLES,
+    'spades': Couleur.PIQUES
+}
 
+# Mapping des noms de rangs anglais vers français
+RANG_MAPPING = {
+    'seven': Rang.SEPT,
+    'eight': Rang.HUIT,
+    'nine': Rang.NEUF,
+    'ten': Rang.DIX,
+    'jack': Rang.VALET,
+    'queen': Rang.DAME,
+    'king': Rang.ROI,
+    'ace': Rang.AS
+}
+
+# Convertir les données en objets Carte en utilisant le mapping
+def convertir_donnees_en_cartes(donnees):
+    cartes = []
+    for carte_data in donnees:
+        couleur_str = carte_data['suit']
+        rang_str = carte_data['rank']
+
+        # Convertir les noms de couleur et de rang en objets correspondants
+        couleur = COULEUR_MAPPING.get(couleur_str.lower())
+        rang = RANG_MAPPING.get(rang_str.lower())
+
+        if couleur and rang:
+            cartes.append(Carte(couleur, rang))
+        else:
+            print(f"Ignorer la carte avec la couleur {couleur_str} et le rang {rang_str}")
+
+    return cartes
 class Paquet:
     def __init__(self):
         self.cartes = [Carte(couleur, rang) for couleur in Couleur for rang in Rang]

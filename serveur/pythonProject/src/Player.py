@@ -1,7 +1,25 @@
+import time
+
 import torch
 
 from src.JoueurEncoder import JoueurEncoder
 from src.paquet import Paquet
+
+negative_infinity = float('-inf')
+
+
+def standardize_score(score):
+    min_score = -35
+    max_score = 40
+
+    min_scale = -1
+    max_scale = 1
+
+    scaled_score = (score - min_score) / (max_score - min_score)
+
+    standardized_score = min_scale + (max_scale - min_scale) * scaled_score
+
+    return standardized_score
 
 
 class Player:
@@ -11,6 +29,7 @@ class Player:
         self.input_dataset = {}
         self.cartes_remportes = []
         self.score = 0
+        self.flag_hearts = 1
 
     def __str__(self):
         return f"{self.name}: {' '.join(str(card) for card in self.cartes)}"
@@ -49,14 +68,15 @@ class Player:
             if card.get_couleur().value == '♥':
                 compteur_coeurs = 1 + compteur_coeurs
                 self.score = self.score - 5
-        # if compteur_coeurs == 8:
-        #     self.score = 40
+        if compteur_coeurs == 8:
+            self.score = 40
         self.cartes_remportes.clear()
 
     def getScore(self):
         return self.score
 
-    def encode_input(self, numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur):
+    def encode_input(self, numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur,
+                     flag_hearts):
         from JoueurEncoder import JoueurEncoder
         j1 = JoueurEncoder()
         all_encoded_data = []
@@ -66,9 +86,11 @@ class Player:
         all_encoded_data.extend(j1.encode_numero_pli(numero_pli))
         all_encoded_data.extend(j1.encode_ordre_joueur(ordre_joueur))
         all_encoded_data.extend(j1.encode_couleur(couleur))
+        all_encoded_data.append(flag_hearts)
         return torch.tensor(all_encoded_data, dtype=torch.float)
 
-    def update_dataset(self, numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur, output):
+    def update_dataset(self, numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur,
+                       flag_hearts, output):
         from JoueurEncoder import JoueurEncoder
         j = JoueurEncoder()
         all_encoded_data = []
@@ -78,16 +100,17 @@ class Player:
         all_encoded_data.extend(j.encode_numero_pli(numero_pli))
         all_encoded_data.extend(j.encode_ordre_joueur(ordre_joueur))
         all_encoded_data.extend(j.encode_couleur(couleur))
-
+        all_encoded_data.append(flag_hearts)
         encoded_output = j.encode_card(output)
         output_tuple = tuple(encoded_output)
 
         self.input_dataset[tuple(all_encoded_data)] = output_tuple
 
     def set_dataset_score(self, score):
+        standardized_score = standardize_score(score)
         for input_data in self.input_dataset:
             output = self.input_dataset[input_data]
-            updated_output = [elem * score if elem == 1 else 0 for elem in output]
+            updated_output = [elem * standardized_score if elem == 1 else 0 for elem in output]
             self.input_dataset[input_data] = updated_output
 
     def get_input_data(self):
@@ -123,25 +146,31 @@ class NNPlayer(Player):
         self.neural_network = neural_network
 
     def play_card(self, color, encoded_input_data):
+
         static_pack = Paquet()
         cards_in_hand = self.get_cartes()
+        has_color = False
 
-        # Pass input data through the neural network
         with torch.no_grad():
             output = self.neural_network(encoded_input_data.clone().detach().requires_grad_(True))
+        for card in cards_in_hand:
+            if card.get_couleur() == color:
+                has_color = True
+        if has_color:
+            playable_mask = [1 if card in cards_in_hand and card.get_couleur() == color else negative_infinity for card
+                             in static_pack.cartes]
+        else:
+            playable_mask = [1 if card in cards_in_hand else negative_infinity for card in static_pack.cartes]
 
-        playable_mask = [1 if card in cards_in_hand else -100 for card in static_pack.cartes]
-
-        # Apply the mask to the output
-        masked_output = output.clone()  # Create a copy of the output tensor
+        masked_output = output.clone()
         for i, value in enumerate(playable_mask):
-            if value == -100:
-                masked_output[i] = -100
-        # Select the index of the card with the highest score
+            if value == negative_infinity:
+                masked_output[i] = negative_infinity
+
         best_card_index = torch.argmax(masked_output).item()
         je = JoueurEncoder()
         best_card = je.decode_card_index(best_card_index)
+
         self.cartes.remove(best_card)
+
         return best_card
-
-

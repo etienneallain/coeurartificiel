@@ -7,7 +7,7 @@ from src.manche import Manche
 
 
 class Trainer:
-    def __init__(self, model, dataset, batch_size=64, learning_rate=0.001, num_epochs=100):
+    def __init__(self, model, dataset, batch_size=64, learning_rate=0.001, num_epochs=10):
         self.model = model
         self.dataset = dataset
         self.batch_size = batch_size
@@ -39,8 +39,11 @@ class Trainer:
 
 def test_model(model, num_manches):
     player_scores = {player.get_name(): 0 for player in
-                     [RandomPlayer("pedro"), NNPlayer("Monster", model), RandomPlayer("pedrito"), RandomPlayer("pedri"),
+                     [RandomPlayer("pedro"), RandomPlayer("pedrito"), RandomPlayer("pedri"),
+                      NNPlayer("Monster", model)
                       ]}
+
+    monster_scores = []  # List to store Monster's scores in each manche
 
     for i in range(num_manches):
         manche = Manche(
@@ -52,25 +55,32 @@ def test_model(model, num_manches):
         for player in manche.joueurs:
             player_scores[player.get_name()] += player.getScore()
 
+        # Store Monster's score in this manche
+        monster_scores.append(manche.joueurs[-1].getScore())  # Assuming Monster is the last player in the list
+
     # Calculate average scores
     total_players = len(player_scores)
     average_scores = {player: score / num_manches for player, score in player_scores.items()}
+
+    # Calculate average score for Monster
+    average_monster_score = sum(monster_scores) / num_manches
 
     # Print average scores
     print("Average scores:")
     for player, average_score in average_scores.items():
         print(f"{player}: {average_score}")
 
-
+    # Return average score for Monster
+    return average_monster_score
 def test_model_NNs(model1, model2, num_manches):
     player_scores = {player.get_name(): 0 for player in
-                     [NNPlayer("pedro1", model1), NNPlayer("pedrito1a", model1), NNPlayer("pedrito1b", model2),
-                      NNPlayer("pedro1c", model2)]}
+                     [NNPlayer("pedro", model1), NNPlayer("pedrito", model1), NNPlayer("pedri", model2),
+                      NNPlayer("pedru", model2)]}
 
     for i in range(num_manches):
         manche = Manche(
-            [NNPlayer("pedro1", model1), NNPlayer("pedrito1a", model1), NNPlayer("pedrito1b", model2),
-             NNPlayer("pedro1c", model2)]
+            [NNPlayer("pedro", model1), NNPlayer("pedrito", model1), NNPlayer("pedri", model2),
+             NNPlayer("pedru", model2)]
         )
         manche.play_with_NN()
 

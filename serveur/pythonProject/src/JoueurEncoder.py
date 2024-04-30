@@ -41,10 +41,9 @@ class JoueurEncoder:
         return encoded_numero_pli
 
     def encode_couleur(self, couleur):
-
-        encoded_couleur = [-1] * 4
         if couleur is None:
-            return encoded_couleur
+            return [0] * 4
+        encoded_couleur = [-1] * 4
         color_lower = couleur.value.lower()
         index = self.couleur_encoding.get(color_lower, -1)
 

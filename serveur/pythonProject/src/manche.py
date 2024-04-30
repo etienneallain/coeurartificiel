@@ -1,5 +1,5 @@
 import random
-from src.paquet import Paquet
+from src.paquet import Paquet, Couleur
 from src.pli import Pli
 
 
@@ -24,6 +24,11 @@ class Manche:
             pli.play_trick_to_update_random_dataset()
             gagnant = self.gagnant_pli(pli)
             self.ouvreur = self.joueurs.index(gagnant)
+            has_won_heart = any(card.get_couleur() == Couleur.COEURS for card in pli.get_pli())
+            if has_won_heart:
+                for player in self.joueurs:
+                    if player != gagnant:
+                        player.flag_hearts = -1
             for c in pli.get_pli():
                 gagnant.add_remporte_carte(c)
                 self.cards_left.remove_card(c)
@@ -39,6 +44,11 @@ class Manche:
             pli.play_trick_with_NN()
             gagnant = self.gagnant_pli(pli)
             self.ouvreur = self.joueurs.index(gagnant)
+            has_won_heart = any(card.get_couleur() == Couleur.COEURS for card in pli.get_pli())
+            if has_won_heart:
+                for player in self.joueurs:
+                    if player != gagnant:
+                        player.flag_hearts = -1
             for c in pli.get_pli():
                 gagnant.add_remporte_carte(c)
                 self.cards_left.remove_card(c)
@@ -52,6 +62,11 @@ class Manche:
             pli.play_trick_to_update_nn_dataset()
             gagnant = self.gagnant_pli(pli)
             self.ouvreur = self.joueurs.index(gagnant)
+            has_won_heart = any(card.get_couleur() == Couleur.COEURS for card in pli.get_pli())
+            if has_won_heart:
+                for player in self.joueurs:
+                    if player != gagnant:
+                        player.flag_hearts = -1
             for c in pli.get_pli():
                 gagnant.add_remporte_carte(c)
                 self.cards_left.remove_card(c)
