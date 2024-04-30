@@ -7,7 +7,7 @@ from src.paquet import Paquet
 
 def select_best_card_with_NN(numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur, flag_hearts):
     static_pack = Paquet()
-    neural_network= load_model(112, 32, "trained_model_1.pth")
+    neural_network= load_model(112, 32, "good_nns/good_boy_3b.pth")
     # Encode the input data
     encoded_input_data = encode_input(numero_pli, cards_in_hand, playable_cards, cartes_du_pli, couleur, ordre_joueur,flag_hearts)
 
