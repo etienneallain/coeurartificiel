@@ -1,5 +1,6 @@
 import unittest
-from Hearts import Card, Rank, Suit, Deck
+from main.Card import Card, Rank, Suit
+from main.Deck import Deck
 
 class TestDeck(unittest.TestCase):
 

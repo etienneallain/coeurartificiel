@@ -1,6 +1,8 @@
 import unittest
-from copy import deepcopy
-from Hearts import State, Deck, Card, Suit, Rank
+from main.Card import Card, Rank, Suit
+from main.Deck import Deck
+from main.State import State
+
 
 class TestState(unittest.TestCase):
     def setUp(self):

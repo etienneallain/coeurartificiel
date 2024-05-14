@@ -1,5 +1,7 @@
 import unittest
-from Hearts import RandomPlayer, Suit, Rank, Card, State
+from main.Card import Card, Rank, Suit
+from main.RandomPlayer import RandomPlayer
+from main.State import State
 
 class TestRandomPlayer(unittest.TestCase):
 

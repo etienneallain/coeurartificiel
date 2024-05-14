@@ -1,5 +1,5 @@
 import unittest
-from Hearts import Card, Rank, Suit
+from main.Card import Card, Rank, Suit
 
 class TestCard(unittest.TestCase):
     def test_creation(self):

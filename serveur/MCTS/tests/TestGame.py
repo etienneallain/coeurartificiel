@@ -1,7 +1,11 @@
 import io
 import sys
 import unittest
-from Hearts import Rank, Suit, Card, Game, Deck, RandomPlayer, State
+from main.Card import Rank, Suit, Card
+from main.Deck import Deck
+from main.Game import Game
+from main.RandomPlayer import RandomPlayer
+from main.State import State
 
 class TestGame(unittest.TestCase):
     def test_init_game(self):

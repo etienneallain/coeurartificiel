@@ -1,5 +1,9 @@
 import unittest
-from Hearts import Rank, Suit, Card, RandomPlayer, Game, Deck, State, MCTSPlayer
+from main.Card import Card, Rank, Suit
+from main.Deck import Deck
+from main.Game import Game
+from main.RandomPlayer import RandomPlayer
+from main.State import State
 
 class TestPlayer(unittest.TestCase):
 
