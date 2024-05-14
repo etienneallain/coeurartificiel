@@ -1,6 +1,7 @@
 import unittest
-from copy import deepcopy
-from Hearts import MCTSPlayer, State, Rank, Suit, Card
+from main.Card import Card, Rank, Suit
+from main.MCTSPlayer import MCTSPlayer
+from main.State import State
 
 class TestNode(unittest.TestCase):
     def setUp(self):
